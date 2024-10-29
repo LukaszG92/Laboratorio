@@ -17,9 +17,8 @@ int main(int argc, char **argv) {
     
     for (int i = 0; i < ROWS; i++) {
         for (int j = 0; j < COLS; j++) {
-            matrix[i * COLS + j] = i + j;  
+            matrix[i * COLS + j] = i;  
         }
-        result[i] = 0.0;
     }
     
     for (int j = 0; j < COLS; j++) {
