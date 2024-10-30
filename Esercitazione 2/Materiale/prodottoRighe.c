@@ -2,13 +2,13 @@
 #include <stdlib.h>
 #include <mpi.h> 
 
-#define ROWS 1000
-#define COLS 1000
+#define ROWS 40000
+#define COLS 40000
 
 int main(int argc, char **argv) {
     int nproc, rank, local_ROWS, i, j;
     double *matrix, *vector, *local_matrix,*local_result, *result;
-    double start_time, end_time;
+    double start_time, end_time, max_time;
 
     MPI_Init(&argc, &argv);
     MPI_Comm_size (MPI_COMM_WORLD, &nproc);
@@ -28,7 +28,7 @@ int main(int argc, char **argv) {
 
         for (i = 0; i < ROWS; i++) { 
             for(j = 0; j < COLS; j++) {
-                    matrix[i*COLS+j]=j;
+                    matrix[i*COLS+j]=i;
             }
         }
 
@@ -44,16 +44,16 @@ int main(int argc, char **argv) {
         }
     }
     }
-
-    MPI_Barrier(MPI_COMM_WORLD);
-    start_time = MPI_Wtime();
         
     MPI_Bcast(&vector[0],COLS,MPI_DOUBLE,0,MPI_COMM_WORLD);            
 
     int *sendcounts = (int*)malloc(nproc * sizeof(int));
     int *displs = (int*)malloc(nproc * sizeof(int));
+    int *recvcounts = (int*)malloc(nproc * sizeof(int));
+    int *rdispls = (int*)malloc(nproc * sizeof(int));
     
     int disp = 0;
+    int rdisp = 0;
     for (int i = 0; i < nproc; i++) {
         int rows_for_proc = ROWS / nproc;
         if (i < remainder) rows_for_proc++;
@@ -61,11 +61,18 @@ int main(int argc, char **argv) {
         sendcounts[i] = rows_for_proc * ROWS;
         displs[i] = disp * ROWS;
         disp += rows_for_proc;
+
+        recvcounts[i] = rows_for_proc;
+        rdispls[i] = rdisp;
+        rdisp += rows_for_proc;
     }
 
     MPI_Scatterv(matrix, sendcounts, displs, MPI_DOUBLE,
         local_matrix, sendcounts[rank], MPI_DOUBLE,
         0, MPI_COMM_WORLD);
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    start_time = MPI_Wtime();
 
     for(i = 0; i < local_ROWS; i++) {   
         local_result[i] = 0;
@@ -74,17 +81,21 @@ int main(int argc, char **argv) {
         }
     }    
         
-    MPI_Gather(&local_result[0],local_ROWS,MPI_DOUBLE,&result[0],local_ROWS,MPI_DOUBLE,0,MPI_COMM_WORLD);
+    MPI_Gatherv(local_result, local_ROWS, MPI_DOUBLE,
+                result, recvcounts, rdispls, MPI_DOUBLE,
+                0, MPI_COMM_WORLD);
 
     MPI_Barrier(MPI_COMM_WORLD);
-    end_time = MPI_Wtime();
+    end_time = MPI_Wtime() - start_time;
+
+    MPI_Reduce(&end_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 
     if (rank == 0) {
         printf("\nRisultati:\n");
         printf("Dimensioni matrice: %d x %d\n", ROWS, COLS);
         printf("Numero processori: %d\n", nproc);
         printf("Results: %f, %f, %f, %f, %f.\n", result[1], result[2], result[3], result[4], result[5]);
-        printf("Tempo di esecuzione: %f secondi\n", end_time - start_time);
+        printf("Tempo di esecuzione: %f secondi\n", max_time);
     }
 
     free(local_matrix);

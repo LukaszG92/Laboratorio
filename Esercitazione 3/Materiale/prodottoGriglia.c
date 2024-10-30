@@ -102,10 +102,6 @@ int main(int argc, char **argv) {
             }
         }
     }
-    
-    // Synchronize and start timing
-    MPI_Barrier(MPI_COMM_WORLD);
-    start_time = MPI_Wtime();
 
     // Calculate send counts and displacements for matrix distribution
     int *sendcounts = NULL;
@@ -191,6 +187,10 @@ int main(int argc, char **argv) {
     // Broadcast local vector portions down the columns
     MPI_Bcast(local_vector, local_cols, MPI_DOUBLE, 0, col_comm);
     
+    // Synchronize and start timing
+    MPI_Barrier(MPI_COMM_WORLD);
+    start_time = MPI_Wtime();
+
     // Compute local matrix-vector product
     for (int i = 0; i < local_rows; i++) {
         local_result[i] = 0.0;
