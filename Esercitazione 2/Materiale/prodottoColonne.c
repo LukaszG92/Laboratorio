@@ -96,14 +96,13 @@ int main(int argc, char **argv) {
     end_time = MPI_Wtime() - start_time;
     MPI_Reduce(&end_time, &max_end, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 
-    if(rank == 0) {
-        fprintf(stdout, "\nExecution Summary\n");
-        fprintf(stdout, "===========================\n");
-        fprintf(stdout, "Number of processors: %d\n", nproc);
-        fprintf(stdout, "Local computation time: %lf\n", end_time);
-        fprintf(stdout, "First 5 elements of result: %f %f %f %f %f\n",
-                result[0], result[1], result[2], result[3], result[4]);
-        fprintf(stdout, "MPI_Reduce max time: %f\n", max_end);
+
+    if (rank == 0) {
+        printf("\nRisultati:\n");
+        printf("Dimensioni matrice: %d x %d\n", ROWS, COLS);
+        printf("Numero processori: %d\n", nproc);
+        printf("Results: %f, %f, %f, %f, %f.\n", result[1], result[2], result[3], result[4], result[5]);
+        printf("Tempo di esecuzione: %f secondi\n", max_end);
     }
 
     // Cleanup
