@@ -29,6 +29,18 @@ int main(int argc, char **argv) {
         }
     }
 
+        p = nproc;
+    while (p != 1) {
+        p = p >> 1;
+        steps++;
+    }
+    
+    powers = (int*)calloc(steps + 1, sizeof(int));
+    for (int i = 0; i <= steps; i++) {
+        powers[i] = 1 << i;
+    }
+	
+
     int *sendcounts = NULL;
     int *displs = NULL;
     
@@ -48,29 +60,18 @@ int main(int argc, char **argv) {
             }
         }
     }
-    
-    MPI_Barrier(MPI_COMM_WORLD);
-    start_time = MPI_Wtime();
 
     MPI_Scatterv(data, sendcounts, displs, MPI_INT, 
                  local_data, local_size, MPI_INT, 
                  0, MPI_COMM_WORLD);
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    start_time = MPI_Wtime();
     
     for (int i = 0; i < local_size; i++) {
         local_sum += local_data[i];
     }
-    
-    p = nproc;
-    while (p != 1) {
-        p = p >> 1;
-        steps++;
-    }
-    
-    powers = (int*)calloc(steps + 1, sizeof(int));
-    for (int i = 0; i <= steps; i++) {
-        powers[i] = 1 << i;
-    }
-	
+
 	
     for (int i = 0; i < steps; i++) {
         int remainder = rank % powers[i + 1];

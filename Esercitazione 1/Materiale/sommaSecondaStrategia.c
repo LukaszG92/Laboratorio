@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <mpi.h>
 
-#define ARRAY_SIZE 100000000
+#define ARRAY_SIZE 400000000
 
 int main(int argc, char **argv) {
     int rank, nproc, local_size, p, tmp;
@@ -52,20 +52,6 @@ int main(int argc, char **argv) {
             }
         }
     }
-
-    MPI_Barrier(MPI_COMM_WORLD);
-    start_time = MPI_Wtime();
-
-    // Distribuzione del vettore usando MPI_Scatterv
-    MPI_Scatterv(data, sendcounts, displs, MPI_INT, 
-                 local_data, local_size, MPI_INT, 
-                 0, MPI_COMM_WORLD);
-
-    
-    // Calcolo della somma locale
-    for (int i = 0; i < local_size; i++) {
-        local_sum += local_data[i];
-    }
     
     // Calcolo numero di passi per la riduzione
     p = nproc;
@@ -77,6 +63,19 @@ int main(int argc, char **argv) {
     powers = (int*)calloc(steps + 1, sizeof(int));
     for (int i = 0; i <= steps; i++) {
         powers[i] = 1 << i;
+    }
+
+    // Distribuzione del vettore usando MPI_Scatterv
+    MPI_Scatterv(data, sendcounts, displs, MPI_INT, 
+                 local_data, local_size, MPI_INT, 
+                 0, MPI_COMM_WORLD);
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    start_time = MPI_Wtime();
+
+    // Calcolo della somma locale
+    for (int i = 0; i < local_size; i++) {
+        local_sum += local_data[i];
     }
     
     // Riduzione della somma
