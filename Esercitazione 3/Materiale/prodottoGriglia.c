@@ -100,6 +100,12 @@ int main(int argc, char **argv) {
                 }
                 printf("\n");
             }
+
+            printf("Vector:\n");
+            for(int i = 0; i < COLS; i++) {
+                printf("%f ", vector[i]);
+            }
+            printf("\n");
         }
     }
 
